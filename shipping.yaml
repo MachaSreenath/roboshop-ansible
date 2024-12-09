@@ -26,11 +26,13 @@
   - name: download shipping application
     ansible.builtin.get_url:
       url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
+      dest: /tmp
 
   - name: extract shipping application
     ansible.builtin.unarchive:
       src: /tmp/shipping.zip
       dest: /app
+      remote_src: yes
 
   - name: install dependencies
     ansible.builtin.command: mvn clean package
@@ -68,8 +70,8 @@
     ansible.builtin.shell: "mysql -h mysql.daws76s.online -uroot -p{{mysql_password}}  < /app/schema/shipping.sql"
     when: schema.stdout != "1"
   
-  - name: start and enable shipping service
+  - name: start and enable shipping
     ansible.builtin.service:
       name: shipping
-      state: started
-      enabled: true
+      state: restarted
+      enabled: yes
