@@ -26,28 +26,13 @@
   - name: download shipping application
     ansible.builtin.get_url:
       url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
-      dest: /tmp/shipping.zip
+      dest: /tmp
 
   - name: extract shipping application
     ansible.builtin.unarchive:
       src: /tmp/shipping.zip
       dest: /app
       remote_src: yes
-
-  - name: ensure schema directory exists
-    ansible.builtin.file:
-      path: /app/schema
-      state: directory
-
-  - name: check if shipping.sql exists
-    ansible.builtin.shell: ls -l /app/schema/shipping.sql
-    register: sql_file_exists
-    ignore_errors: yes
-
-  - name: fail if shipping.sql is not found
-    ansible.builtin.fail:
-      msg: "shipping.sql is missing from /app/schema/"
-    when: sql_file_exists.rc != 0
 
   - name: install dependencies
     ansible.builtin.command: mvn clean package
@@ -64,32 +49,28 @@
       src: shipping.service
       dest: /etc/systemd/system/shipping.service
 
-  - name: daemon reload and start shipping service
-    ansible.builtin.systemd:
-      name: shipping
-      state: restarted
-      enabled: yes
-      daemon_reload: yes
+  - name: deamon realod and start
+    ansible.builtin.systemd_service:
+      daemon_reload: true
 
   - name: install mysql client
     ansible.builtin.dnf:
       name: mysql
       state: present
 
-  - name: check if cities schema exists
-    ansible.builtin.command: |
-      mysql -h mysql.forpractice.uno -uroot -p{{ mysql_password }} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
+  - name: check cities schema exists or not
+    ansible.builtin.command:  mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
     register: schema
 
-  - name: print schema output
+  - name: print output
     ansible.builtin.debug:
-      msg: "Schema output: {{ schema.stdout }}"
+      msg: "schema output: {{schema}}"
 
-  - name: load cities data if schema does not exist
-    ansible.builtin.shell: "mysql -h mysql.forpractice.uno -uroot -p{{ mysql_password }} < /app/schema/shipping.sql"
+  - name: load cities data
+    ansible.builtin.shell: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}}  < /app/schema/shipping.sql"
     when: schema.stdout != "1"
 
-  - name: start and enable shipping service
+  - name: start and enable shipping
     ansible.builtin.service:
       name: shipping
       state: restarted
