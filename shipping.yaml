@@ -13,14 +13,14 @@
     ansible.builtin.user:
       name: roboshop
 
-  - name: Recursively remove app directory
+  - name: Recursively remove new directory
     ansible.builtin.file:
-      path: /app
+      path: /new
       state: absent
 
-  - name: create app directory
+  - name: create new directory
     ansible.builtin.file:
-      path: /app
+      path: /new
       state: directory
 
   - name: download shipping application
@@ -31,18 +31,18 @@
   - name: extract shipping application
     ansible.builtin.unarchive:
       src: /tmp/shipping.zip
-      dest: /app
+      dest: /new
       remote_src: yes
 
   - name: install dependencies
     ansible.builtin.command: mvn clean package
     args:
-      chdir: /app
+      chdir: /new
 
   - name: rename jar file
     ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar
     args:
-      chdir: /app
+      chdir: /new
 
   - name: copy shipping service
     ansible.builtin.copy:
@@ -67,7 +67,7 @@
       msg: "schema output: {{schema}}"
 
   - name: load cities data
-    ansible.builtin.shell: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}}  < /app/schema/shipping.sql"
+    ansible.builtin.shell: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}}  < /new/schema/shipping.sql"
     when: schema.stdout != "1"
 
   - name: start and enable shipping
