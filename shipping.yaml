@@ -69,7 +69,6 @@
   - name: load cities data
     ansible.builtin.shell: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}}  < /app/schema/shipping.sql"
     when: schema.stdout != "1"
-    remote_src: yes
 
   - name: start and enable shipping
     ansible.builtin.service:
