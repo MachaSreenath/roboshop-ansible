@@ -80,6 +80,12 @@
     ansible.builtin.debug:
       msg: "File exists: {{ shipping_sql.stat.exists }}"
 
+  - name: upload shipping.sql file if not exists
+    ansible.builtin.copy:
+      src: /path/to/your/local/shipping.sql  # Update this path to where the shipping.sql file is located locally
+      dest: /app/schema/shipping.sql
+    when: not shipping_sql.stat.exists
+
   - name: load cities data
     ansible.builtin.shell:
       cmd: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} < /app/schema/shipping.sql"
