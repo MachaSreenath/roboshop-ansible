@@ -1,4 +1,4 @@
-- name: mysql configuration 
+- name: install mysql component
   hosts: mysql
   become: yes
   tasks:
@@ -10,7 +10,7 @@
       src: mysql.repo
       dest: /etc/yum.repos.d/mysql.repo
 
-  - name: install mysql community server
+  - name: install mysql server
     ansible.builtin.package:
       name: mysql-community-server
       state: present
@@ -20,10 +20,6 @@
       name: mysqld
       state: started
       enabled: yes
-      
+
   - name: setup root password
     ansible.builtin.command: mysql_secure_installation --set-root-pass RoboShop@1
-
-
-
-    
