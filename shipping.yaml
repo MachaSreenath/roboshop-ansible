@@ -73,7 +73,6 @@
       mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} < /app/db/master-data.sql
     when: schema.stdout != "1"
 
-
   - name: start and enable shipping
     ansible.builtin.service:
       name: shipping
