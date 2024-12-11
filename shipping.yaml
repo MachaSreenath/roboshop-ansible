@@ -4,95 +4,95 @@
   vars:
     mysql_password: RoboShop@1
   tasks:
-  - name: install maven
-    ansible.builtin.dnf:
-      name: maven
-      state: present
+    - name: install maven
+      ansible.builtin.dnf:
+        name: maven
+        state: present
 
-  - name: create roboshop user
-    ansible.builtin.user:
-      name: roboshop
+    - name: create roboshop user
+      ansible.builtin.user:
+        name: roboshop
 
-  - name: Recursively remove app directory
-    ansible.builtin.file:
-      path: /app
-      state: absent
+    - name: Recursively remove app directory
+      ansible.builtin.file:
+        path: /app
+        state: absent
 
-  - name: create app directory
-    ansible.builtin.file:
-      path: /app
-      state: directory
+    - name: create app directory
+      ansible.builtin.file:
+        path: /app
+        state: directory
 
-  - name: download shipping application
-    ansible.builtin.get_url:
-      url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
-      dest: /tmp
+    - name: download shipping application
+      ansible.builtin.get_url:
+        url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
+        dest: /tmp
 
-  - name: extract shipping application
-    ansible.builtin.unarchive:
-      src: /tmp/shipping.zip
-      dest: /app
-      remote_src: yes
+    - name: extract shipping application
+      ansible.builtin.unarchive:
+        src: /tmp/shipping.zip
+        dest: /app
+        remote_src: yes
 
-  - name: install dependencies
-    ansible.builtin.command:
-      cmd: mvn clean package
-      chdir: /app
+    - name: install dependencies
+      ansible.builtin.command:
+        cmd: mvn clean package
+        chdir: /app
 
-  - name: rename jar file
-    ansible.builtin.command:
-      cmd: mv target/shipping-1.0.jar shipping.jar
-      chdir: /app
+    - name: rename jar file
+      ansible.builtin.command:
+        cmd: mv target/shipping-1.0.jar shipping.jar
+        chdir: /app
 
-  - name: copy shipping service
-    ansible.builtin.copy:
-      src: shipping.service
-      dest: /etc/systemd/system/shipping.service
+    - name: copy shipping service
+      ansible.builtin.copy:
+        src: shipping.service
+        dest: /etc/systemd/system/shipping.service
 
-  - name: daemon reload and start shipping service
-    ansible.builtin.systemd:
-      name: shipping
-      daemon_reload: yes
-      state: restarted
-      enabled: yes
+    - name: daemon reload and start shipping service
+      ansible.builtin.systemd:
+        name: shipping
+        daemon_reload: yes
+        state: restarted
+        enabled: yes
 
-  - name: install mysql client
-    ansible.builtin.dnf:
-      name: mysql
-      state: present
+    - name: install mysql client
+      ansible.builtin.dnf:
+        name: mysql
+        state: present
 
-  - name: check cities schema exists or not
-    ansible.builtin.command:
-      cmd: mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
-    register: schema
-    changed_when: false
+    - name: check cities schema exists or not
+      ansible.builtin.command:
+        cmd: mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
+      register: schema
+      changed_when: false
 
-  - name: debug schema output
-    ansible.builtin.debug:
-      msg: "Schema output: {{ schema.stdout }}"
+    - name: debug schema output
+      ansible.builtin.debug:
+        msg: "Schema output: {{ schema.stdout }}"
 
-  - name: ensure the shipping.sql file exists
-    ansible.builtin.stat:
-      path: /app/schema/shipping.sql
-    register: shipping_sql
+    - name: ensure the shipping.sql file exists
+      ansible.builtin.stat:
+        path: /app/schema/shipping.sql
+      register: shipping_sql
 
-  - name: debug if shipping.sql exists
-    ansible.builtin.debug:
-      msg: "File exists: {{ shipping_sql.stat.exists }}"
+    - name: debug if shipping.sql exists
+      ansible.builtin.debug:
+        msg: "File exists: {{ shipping_sql.stat.exists }}"
 
-  - name: upload shipping.sql file if not exists
-    ansible.builtin.copy:
-      src: /path/to/your/local/shipping.sql  # Update this path to where the shipping.sql file is located locally
-      dest: /app/schema/shipping.sql
-    when: not shipping_sql.stat.exists
+    - name: upload shipping.sql file if not exists
+      ansible.builtin.copy:
+        src: /home/user/Downloads/shipping.sql  # Correct path to your local shipping.sql file
+        dest: /app/schema/shipping.sql
+      when: not shipping_sql.stat.exists
 
-  - name: load cities data
-    ansible.builtin.shell:
-      cmd: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} < /app/schema/shipping.sql"
-    when: schema.stdout != "1" and shipping_sql.stat.exists
+    - name: load cities data
+      ansible.builtin.shell:
+        cmd: "mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} < /app/schema/shipping.sql"
+      when: schema.stdout != "1" and shipping_sql.stat.exists
 
-  - name: start and enable shipping service
-    ansible.builtin.systemd:
-      name: shipping
-      state: restarted
-      enabled: yes
+    - name: start and enable shipping service
+      ansible.builtin.systemd:
+        name: shipping
+        state: restarted
+        enabled: yes
