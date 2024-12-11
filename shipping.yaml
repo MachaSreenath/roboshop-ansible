@@ -67,14 +67,18 @@
     register: schema
     changed_when: false
 
-  - name: print output
+  - name: debug schema output
     ansible.builtin.debug:
-      msg: "schema output: {{ schema.stdout }}"
+      msg: "Schema output: {{ schema.stdout }}"
 
   - name: ensure the shipping.sql file exists
     ansible.builtin.stat:
       path: /app/schema/shipping.sql
     register: shipping_sql
+
+  - name: debug if shipping.sql exists
+    ansible.builtin.debug:
+      msg: "File exists: {{ shipping_sql.stat.exists }}"
 
   - name: load cities data
     ansible.builtin.shell:
