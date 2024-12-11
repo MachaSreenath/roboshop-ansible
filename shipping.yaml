@@ -23,68 +23,26 @@
         path: /app
         state: directory
 
-    - name: download shipping application
-      ansible.builtin.get_url:
-        url: https://roboshop-builds.s3.amazonaws.com/shipping.zip
-        dest: /tmp
+    - name: create schema directory if not exists
+      ansible.builtin.file:
+        path: /app/schema
+        state: directory
+        mode: '0755'
 
-    - name: extract shipping application
-      ansible.builtin.unarchive:
-        src: /tmp/shipping.zip
-        dest: /app
-        remote_src: yes
-
-    - name: install dependencies
-      ansible.builtin.command:
-        cmd: mvn clean package
-        chdir: /app
-
-    - name: rename jar file
-      ansible.builtin.command:
-        cmd: mv target/shipping-1.0.jar shipping.jar
-        chdir: /app
-
-    - name: copy shipping service
+    - name: upload shipping.sql file if not exists
       ansible.builtin.copy:
-        src: shipping.service
-        dest: /etc/systemd/system/shipping.service
-
-    - name: daemon reload and start shipping service
-      ansible.builtin.systemd:
-        name: shipping
-        daemon_reload: yes
-        state: restarted
-        enabled: yes
-
-    - name: install mysql client
-      ansible.builtin.dnf:
-        name: mysql
-        state: present
+        src: /path/to/local/shipping.sql  # Correct local path to shipping.sql file
+        dest: /app/schema/shipping.sql
+      when: not shipping_sql.stat.exists
 
     - name: check cities schema exists or not
       ansible.builtin.command:
         cmd: mysql -h mysql.forpractice.uno -uroot -p{{mysql_password}} -sN -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
       register: schema
-      changed_when: false
 
     - name: debug schema output
       ansible.builtin.debug:
         msg: "Schema output: {{ schema.stdout }}"
-
-    - name: ensure the shipping.sql file exists
-      ansible.builtin.stat:
-        path: /app/schema/shipping.sql
-      register: shipping_sql
-
-    - name: debug if shipping.sql exists
-      ansible.builtin.debug:
-        msg: "File exists: {{ shipping_sql.stat.exists }}"
-
-    - name: upload shipping.sql file if not exists
-      ansible.builtin.copy:
-        src: /home/user/Downloads/shipping.sql  # Correct path to your local shipping.sql file
-        dest: /app/schema/shipping.sql
-      when: not shipping_sql.stat.exists
 
     - name: load cities data
       ansible.builtin.shell:
