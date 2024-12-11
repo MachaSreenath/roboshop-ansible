@@ -80,18 +80,3 @@
         mysql -h mysql.forpractice.uno -uroot -p{{ mysql_password }} -sN -e
         "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'cities'"
     register: schema
-
-  - name: print schema check output
-    ansible.builtin.debug:
-      msg: "Schema check output: {{ schema.stdout }}"
-
-  - name: load cities data
-    ansible.builtin.shell:
-      cmd: mysql -h mysql.forpractice.uno -uroot -p{{ mysql_password }} < /app/schema/shipping.sql
-    when: schema.stdout != "1"
-
-  - name: restart and enable shipping service
-    ansible.builtin.service:
-      name: shipping
-      state: restarted
-      enabled: yes
