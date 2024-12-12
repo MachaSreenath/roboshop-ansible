@@ -1,29 +1,45 @@
-- name: install redis component
+- name: Install and Configure Redis
   hosts: redis
   become: yes
   tasks:
-  - name: install remi release
+  - name: Install Remi release
     ansible.builtin.dnf:
       name: https://rpms.remirepo.net/enterprise/remi-release-8.rpm
       state: present
       disable_gpg_check: true
 
-  - name: enable redis
-    ansible.builtin.command: dnf module enable redis:remi-6.2 -y
+  - name: Reset Redis module
+    ansible.builtin.command:
+      cmd: dnf module reset redis -y
+    changed_when: false
 
-  - name: install redis
+  - name: Enable Redis module remi-6.2
+    ansible.builtin.command:
+      cmd: dnf module enable redis:remi-6.2 -y
+
+  - name: Install Redis
     ansible.builtin.dnf:
       name: redis
       state: present
 
-  - name: allow remote connections
+  - name: Configure Redis to allow remote connections
     ansible.builtin.replace:
       path: /etc/redis/redis.conf
-      regexp: '127.0.0.1'
-      replace: '0.0.0.0'
+      regexp: '^bind 127.0.0.1'
+      replace: 'bind 0.0.0.0'
 
-  - name: start and enable redis
+  - name: Restart and enable Redis service
     ansible.builtin.service:
       name: redis
       state: restarted
       enabled: yes
+
+  - name: Verify Redis is listening on all interfaces
+    ansible.builtin.command:
+      cmd: netstat -tuln | grep 6379
+    register: redis_listen
+    ignore_errors: yes
+
+  - name: Display Redis listening status
+    ansible.builtin.debug:
+      msg: "{{ redis_listen.stdout_lines }}"
