@@ -7,7 +7,7 @@
       name: "{{item}}"
       state: present
     loop:
-    - python36
+    - python3.11
     - gcc
     - python3-devel
 
@@ -35,7 +35,7 @@
       remote_src: yes
 
   - name: install dependencies
-    ansible.builtin.command: pip3.6 install -r requirements.txt
+    ansible.builtin.command: pip3.11 install -r requirements.txt
     args: 
       chdir: /app
 
